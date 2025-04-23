@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>射击成绩记录系统</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">🏅 射击队员成绩记录</h1>
+    <div class="bg-white p-4 rounded shadow">
+      <label class="block mb-2 font-semibold">队员姓名：</label>
+      <input id="name" type="text" class="border p-2 w-full mb-4" />
+
+      <label class="block mb-2 font-semibold">成绩列表（用英文逗号分隔）：</label>
+      <input id="scores" type="text" class="border p-2 w-full mb-4" placeholder="例如：95,96,97,94,98" />
+
+      <button onclick="addData()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">提交</button>
+    </div>
+
+    <div class="mt-8">
+      <canvas id="scoreChart"></canvas>
+      <p class="mt-4 text-lg font-semibold">📈 波动性（标准差）：<span id="stddev">--</span></p>
+    </div>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+    let chart;
+
+    function addData() {
+      const name = document.getElementById('name').value;
+      const scoreInput = document.getElementById('scores').value;
+      const scores = scoreInput.split(',').map(s => parseFloat(s.trim())).filter(s => !isNaN(s));
+
+      if (!name || scores.length === 0) {
+        alert('请填写姓名并输入有效成绩');
+        return;
+      }
+
+      const labels = scores.map((_, i) => `第${i + 1}次`);
+
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: name + ' 的成绩变化',
+            data: scores,
+            borderColor: 'rgb(75, 192, 192)',
+            fill: false,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+
+      // 计算标准差
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      const variance = scores.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / scores.length;
+      const stddev = Math.sqrt(variance).toFixed(2);
+      document.getElementById('stddev').textContent = stddev;
+    }
+  </script>
+</body>
+</html>
